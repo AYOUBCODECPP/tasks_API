@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Task Manager</h2>
+        <div id="task-list"></div>
+        <hr>
+        <h3>Add Task</h3>
+        <form id="task-form">
+            <div class="form-group">
+                <label for="title">Title</label>
+                <input type="text" id="title" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" class="form-control" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Task</button>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            fetchTasks();
+
+            // Add task
+            $('#task-form').submit(function(e) {
+                e.preventDefault();
+
+                const title = $('#title').val();
+                const description = $('#description').val();
+
+                $.ajax({
+                    url: 'http://localhost/WEB_API/API.php',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ title, description }),
+                    success: function(response) {
+                      
+                        fetchTasks(); // Refresh task list
+                        $('#title').val('');
+                        $('#description').val('');
+                    },
+                    error: function() {
+                        alert('Error adding task');
+                    }
+                });
+            });
+        });
+
+        // Fetch tasks
+        function fetchTasks() {
+            $.ajax({
+                url: 'http://localhost/WEB_API/API.php',
+                method: 'GET',
+                success: function(tasks) {
+                    let taskList = '<ul class="list-group">';
+                    tasks.forEach(function(task) {
+                        taskList += `
+                            <li class="list-group-item">
+                                <strong>${task.title}</strong><br>
+                                ${task.description}<br>
+                                Status: ${task.status}<br>
+                                <button class="btn btn-info btn-sm" onclick="updateTask(${task.id}, 'completed')">Complete</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteTask(${task.id})">Delete</button>
+                            </li>
+                        `;
+                    });
+                    taskList += '</ul>';
+                    $('#task-list').html(taskList);
+                },
+                error: function() {
+                    
+                }
+            });
+        }
+
+        // Update task status
+        function updateTask(id, status) {
+            $.ajax({
+                url: 'http://localhost/WEB_API/API.php',
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({ id, status }),
+                success: function(response) {
+                    
+                    fetchTasks();
+                },
+                error: function() {
+                    alert('Error updating task');
+                }
+            });
+        }
+
+        // Delete task
+        function deleteTask(id) {
+            $.ajax({
+                url: 'http://localhost/WEB_API/API.php',
+                method: 'DELETE',
+                contentType: 'application/json',
+                data: JSON.stringify({ id }),
+                success: function(response) {
+                    
+                    fetchTasks();
+                },
+                error: function() {
+                    alert('Error deleting task');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
